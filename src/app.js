@@ -1,5 +1,5 @@
-console.log('TOKEN:', process.env.BOT_TOKEN)
 require('dotenv').config()
+
 const express = require('express')
 const cors = require('cors')
 const { Telegraf, Markup } = require('telegraf')
@@ -67,6 +67,11 @@ app.listen(PORT, () => {
 /* ============================= */
 /*  TELEGRAM BOT                 */
 /* ============================= */
+
+if (!process.env.BOT_TOKEN) {
+  console.error('❌ BOT_TOKEN не найден в environment')
+  process.exit(1)
+}
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
@@ -158,7 +163,6 @@ bot.on('text', async (ctx) => {
 
   try {
     const user = await findOrCreateUser(ctx.from.id)
-
     await addTransaction(user.id, amount, state, null)
 
     userState[ctx.from.id] = null
@@ -174,9 +178,19 @@ bot.on('text', async (ctx) => {
   }
 })
 
+/* ===== ВАЖНО: УБИРАЕМ WEBHOOK И ЗАПУСКАЕМ POLLING ===== */
+
+async function startBot() {
+  try {
+    await bot.telegram.deleteWebhook()
+    await bot.launch()
+    console.log('🤖 Bot started')
+  } catch (err) {
+    console.error('Bot launch error:', err)
+  }
+}
+
+startBot()
+
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
-
-bot.launch()
-  .then(() => console.log('🤖 Bot started'))
-  .catch(err => console.error('Bot launch error:', err))
