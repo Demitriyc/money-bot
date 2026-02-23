@@ -1,3 +1,4 @@
+console.log('TOKEN:', process.env.BOT_TOKEN)
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
