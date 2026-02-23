@@ -71,7 +71,11 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 
 const userState = {}
 
-function mainMenu() {
+/* ===== ГЛАВНОЕ МЕНЮ ===== */
+
+function mainMenu(ctx) {
+  const webUrl = `https://money-bot-1-96mu.onrender.com/?telegramId=${ctx.from.id}`
+
   return Markup.inlineKeyboard([
     [
       Markup.button.callback('➕ Доход', 'income'),
@@ -79,6 +83,9 @@ function mainMenu() {
     ],
     [
       Markup.button.callback('📊 Баланс', 'balance')
+    ],
+    [
+      Markup.button.webApp('🌐 Открыть веб', webUrl)
     ]
   ])
 }
@@ -89,10 +96,12 @@ function backButton() {
   ])
 }
 
+/* ===== BOT START ===== */
+
 bot.start(async (ctx) => {
   await ctx.reply(
     '💰 Финансовый бот\n\nВыберите действие:',
-    mainMenu()
+    mainMenu(ctx)
   )
 })
 
@@ -119,7 +128,7 @@ bot.action('balance', async (ctx) => {
 
     await ctx.editMessageText(
       `📊 Ваш баланс:\n\n💰 ${balance}`,
-      mainMenu()
+      mainMenu(ctx)
     )
   } catch (err) {
     console.error(err)
@@ -132,7 +141,7 @@ bot.action('back', async (ctx) => {
 
   await ctx.editMessageText(
     '💰 Финансовый бот\n\nВыберите действие:',
-    mainMenu()
+    mainMenu(ctx)
   )
 })
 
@@ -156,7 +165,7 @@ bot.on('text', async (ctx) => {
     await ctx.reply('✅ Сохранено')
     await ctx.reply(
       'Выберите действие:',
-      mainMenu()
+      mainMenu(ctx)
     )
   } catch (err) {
     console.error(err)
