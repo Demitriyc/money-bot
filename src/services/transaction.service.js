@@ -42,8 +42,55 @@ async function getBalance(userId) {
   return result.rows[0].balance
 }
 
+/* ============================= */
+/*  НОВЫЕ ФУНКЦИИ ДЛЯ WEB       */
+/* ============================= */
+
+async function getAll(userId) {
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM transactions
+    WHERE user_id = $1
+    ORDER BY created_at DESC
+    `,
+    [userId]
+  )
+
+  return result.rows
+}
+
+async function deleteById(id) {
+  await pool.query(
+    `
+    DELETE FROM transactions
+    WHERE id = $1
+    `,
+    [id]
+  )
+}
+
+async function deleteLast(userId) {
+  await pool.query(
+    `
+    DELETE FROM transactions
+    WHERE id = (
+      SELECT id
+      FROM transactions
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      LIMIT 1
+    )
+    `,
+    [userId]
+  )
+}
+
 module.exports = {
   findOrCreateUser,
   addTransaction,
-  getBalance
+  getBalance,
+  getAll,
+  deleteById,
+  deleteLast
 }

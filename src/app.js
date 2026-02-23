@@ -1,22 +1,61 @@
 require('dotenv').config()
 const express = require('express')
+const cors = require('cors')
 const { Telegraf, Markup } = require('telegraf')
+
 require('./database/db')
 
 const {
   findOrCreateUser,
   addTransaction,
-  getBalance
+  getBalance,
+  getAll,
+  deleteById,
+  deleteLast
 } = require('./services/transaction.service')
 
-const app = express()
+/* ============================= */
+/*  EXPRESS (Render API)         */
+/* ============================= */
 
-/* ============================= */
-/*  EXPRESS (нужно для Render)   */
-/* ============================= */
+const app = express()
+app.use(cors())
+app.use(express.json())
 
 app.get('/', (req, res) => {
   res.send('Bot is alive 🚀')
+})
+
+/* ===== API ===== */
+
+app.get('/api/transactions/:userId', async (req, res) => {
+  try {
+    const data = await getAll(req.params.userId)
+    res.json(data)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Ошибка получения данных' })
+  }
+})
+
+app.delete('/api/transactions/:id', async (req, res) => {
+  try {
+    await deleteById(req.params.id)
+    res.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Ошибка удаления' })
+  }
+})
+
+app.delete('/api/transactions/last/:userId', async (req, res) => {
+  try {
+    await deleteLast(req.params.userId)
+    res.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Ошибка удаления' })
+  }
 })
 
 const PORT = process.env.PORT || 3000
@@ -31,8 +70,6 @@ app.listen(PORT, () => {
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
 const userState = {}
-
-/* -------- Меню -------- */
 
 function mainMenu() {
   return Markup.inlineKeyboard([
@@ -51,8 +88,6 @@ function backButton() {
     [Markup.button.callback('⬅ Назад', 'back')]
   ])
 }
-
-/* -------- Команды -------- */
 
 bot.start(async (ctx) => {
   await ctx.reply(
@@ -129,16 +164,8 @@ bot.on('text', async (ctx) => {
   }
 })
 
-/* ============================= */
-/*  ВАЖНО: graceful shutdown     */
-/* ============================= */
-
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
-
-/* ============================= */
-/*  Запуск                       */
-/* ============================= */
 
 bot.launch()
   .then(() => console.log('🤖 Bot started'))
